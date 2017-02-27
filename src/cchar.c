@@ -9,7 +9,7 @@
 
 #include "pfasta.h"
 
-int count(const pfasta_seq *);
+void count(const pfasta_seq *);
 void print_counts(const size_t *counts);
 
 //const int CHARS = 128;
@@ -19,7 +19,7 @@ size_t counts_local[CHARS];
 
 enum {
 	NONE = 0,
-	PRINT_TOTAL = 1,
+	SPLIT = 1,
 	CASE_INSENSITIVE = 2
 } FLAGS = 0;
 
@@ -27,18 +27,18 @@ int main(int argc, char *argv[])
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "hit")) != -1) {
+	while ((c = getopt(argc, argv, "his")) != -1) {
 		switch (c) {
 			case 'i':
 				FLAGS |= CASE_INSENSITIVE;
 				break;
-			case 't':
-				FLAGS |= PRINT_TOTAL;
+			case 's':
+				FLAGS |= SPLIT;
 				break;
 			case 'h':
 			case '?':
 			default:
-				fprintf(stderr, "Usage: %s [-hit] [FASTA...]\n", argv[0]);
+				fprintf(stderr, "Usage: %s [-his] [FASTA...]\n", argv[0]);
 				return 1;
 		}
 	}
@@ -76,8 +76,10 @@ int main(int argc, char *argv[])
 		pfasta_seq ps;
 		while ((l = pfasta_read(&pf, &ps)) == 0) {
 			count(&ps);
-			printf(">%s\n", ps.name);
-			print_counts(counts_local);
+			if (FLAGS & SPLIT) {
+				printf(">%s\n", ps.name);
+				print_counts(counts_local);
+			}
 			pfasta_seq_free(&ps);
 			for (size_t i = 0; i< CHARS; i++){
 				counts_total[i] += counts_local[i];
@@ -90,7 +92,7 @@ int main(int argc, char *argv[])
 			pfasta_seq_free(&ps);
 		}
 
-		if (FLAGS & PRINT_TOTAL) {
+		if (!(FLAGS & SPLIT)) {
 			printf(">%s\n", file_name);
 			print_counts(counts_total);
 		}
@@ -103,7 +105,7 @@ int main(int argc, char *argv[])
 	return exit_code;
 }
 
-int count(const pfasta_seq *ps)
+void count(const pfasta_seq *ps)
 {
 	int ret = 0;
 	bzero(counts_local, sizeof(counts_local));
@@ -125,9 +127,12 @@ int count(const pfasta_seq *ps)
 
 void print_counts(const size_t *counts)
 {
+	size_t sum = 0;
 	for (int i = 1; i < CHARS; ++i) {
 		if (counts[i]) {
-			printf("%c: %zu\n", i, counts[i]);
+			printf("%c:\t%8zu\n", i, counts[i]);
+			sum += counts[i];
 		}
 	}
+	printf("# sum:\t%8zu\n", sum);
 }
