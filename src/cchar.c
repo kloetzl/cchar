@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
 			if (FLAGS & SPLIT) {
 				printf(">%s\n", ps.name);
 				print_counts(counts_local);
+				bzero(counts_local, sizeof(counts_local));
 			}
 			pfasta_seq_free(&ps);
 			for (size_t i = 0; i< CHARS; i++){
@@ -95,6 +96,7 @@ int main(int argc, char *argv[])
 		if (!(FLAGS & SPLIT)) {
 			printf(">%s\n", file_name);
 			print_counts(counts_total);
+			bzero(counts_total, sizeof(counts_total));
 		}
 
 	fail:
@@ -107,7 +109,6 @@ int main(int argc, char *argv[])
 
 void count(const pfasta_seq *ps)
 {
-	int ret = 0;
 	bzero(counts_local, sizeof(counts_local));
 	const char *ptr = ps->seq;
 
@@ -121,8 +122,6 @@ void count(const pfasta_seq *ps)
 		}
 		ptr++;
 	}
-
-	return ret;
 }
 
 void print_counts(const size_t *counts)
